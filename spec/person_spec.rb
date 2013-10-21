@@ -1,12 +1,11 @@
 require 'rspec'
-require_ralative '../person'
+require './person'
 
 describe Person do
  
-  context 'with no arguments given'
+  context 'with no arguments given' do
 	  it 'initialzed with random values' do
 	  	@person = Person.new
-	  	@person.should be an_instance_of(Person)
 	  	@person.age.should be_between(0, 100)
 	  	@person.salary.should be_between(0, 1000000)
 	  	@person.height.should be_between(0, 200)
@@ -17,7 +16,6 @@ describe Person do
   context 'with all arguments given' do
   	it 'initialized with appropriate values' do
   		@person = Person.new(1, 666, 200, 200)
-  		@person.should be an_instance_of(Person)
   		@person.age.should be 1
 	  	@person.salary.should be 666
 	  	@person.height.should be 200
