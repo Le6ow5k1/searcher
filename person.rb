@@ -9,13 +9,4 @@ class Person
 		@weight = weight
 	end
 
-	def field_value(field)
-		case field
-		when :age 	 then self.age
-		when :salary then self.salary
-		when :height then self.height
-		when :weight then self.weight
-		end
-	end
-
 end
