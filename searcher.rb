@@ -7,7 +7,6 @@ class Searcher
 
 	# Создает массив индексов по заданным полям
 	def add_indexes(data, fields)
-		debugger
 		@indexes = fields.map {|field| build_index(data, field)}
 	end
 
@@ -15,10 +14,10 @@ class Searcher
 	def build_index(data, field)
 		index = Hash.new
 		data.each_with_index do |obj, i|
-			if !index.has_key?(obj.field_value(field))
-				index[obj.field_value(field)] = []
+			if !index.has_key?(obj.send(field))
+				index[obj.send(field)] = []
 			end
-			index[obj.field_value(field)] << i
+			index[obj.send(field)] << i
 		end
 		index
 	end
@@ -61,7 +60,7 @@ class Searcher
 		# Проходим по условиям в порядке их селективности
 		# и последовательно уменьшаем нашу выборку
 		@criteria.inject(data) do |data, criterion|
-			data.keep_if{|obj| (criterion[1]===obj.field_value(criterion[0]))}
+			data.keep_if{|obj| (criterion[1]===obj.send(criterion[0]))}
 		end
 	end
 
@@ -74,13 +73,15 @@ class Searcher
 		end
 	end
 
-	def search_with_index(data, criteria)
-		@criteria = parse_criteria(criteria)
-		@criteria.inject(data) do |data, criterion|
-			data.keep_if{|obj| (criterion[1]===obj.field_value(criterion[0]))}
-		end
-		c.each{|field, range| result_ids &= @index.select_from(FIELDS[field], range)}
-	end
+	# def search_with_index(data, criteria)
+	# 	@criteria = parse_criteria(criteria)
+	# 	@criteria.inject(data) do |data, criterion|
+	# 		data.keep_if{|obj| (criterion[1]===obj.send(criterion[0]))}
+	# 	end
+	# 	c.each{|field, range| result_ids &= @index.select_from(FIELDS[field], range)}
+	# end
+
+	# def select(field, )
 
 	# def fetch_from_index(field, range)
 
