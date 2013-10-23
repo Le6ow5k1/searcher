@@ -7,7 +7,7 @@ describe Person do
 	  it 'initialzed with random values' do
 	  	@person = Person.new
 	  	@person.age.should be_between(0, 100)
-	  	@person.salary.should be_between(0, 1000000)
+	  	@person.salary.should be_between(0, 1000000.0)
 	  	@person.height.should be_between(0, 200)
 	  	@person.weight.should be_between(0, 200)
 	  end
