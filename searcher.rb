@@ -1,34 +1,51 @@
+require 'debugger'
 
 class Searcher
 	@data = []
+	FIELDS = {:age => 0, :salary => 1, :height => 2, :weight => 3}
+	BOUNDS = {:age => 0..100, :salary => 0..10000000.0, :height => 0..200, :weight => 0..200}
 
-	# Загружает объекты и упорядочивает их для более удобного поиска
-	def load(objects)
-		@data = objects
-		# build_index_age
-		# build_index_salary
+	# Создает массив индексов по заданным полям
+	def add_indexes(data, fields)
+		debugger
+		@indexes = fields.map {|field| build_index(data, field)}
 	end
 
 	# Создает индекс по соответствующему полю
-	def build_index_age
-		@age_hash = Hash.new
-		@data.each_with_index do |obj, i|
-			if !@age_hash.has_key?(obj.age)
-				@age_hash[obj.age] = []
+	def build_index(data, field)
+		index = Hash.new
+		data.each_with_index do |obj, i|
+			if !index.has_key?(obj.field_value(field))
+				index[obj.field_value(field)] = []
 			end
-			@age_hash[obj.age] << i
+			index[obj.field_value(field)] << i
 		end
+		index
 	end
 
-	# def build_index_salary
-	# 	@salary_hash = Hash.new
-	# 	@data.each_with_index do |obj, i|
-	# 		if !@salary_hash.has_key?(obj.salary)
-	# 			@salary_hash[obj.salary] = []
-	# 		end
-	# 		@salary_hash[obj.salary] << i
-	# 	end
-	# end
+	# Производит разбор и сортировку условий по их селективности
+	def parse_criteria(criteria)
+    parsed = criteria.map do |field, range|
+    	if (!FIELDS.has_key? field) or (range == BOUNDS[field])
+    		next
+    	end
+      if range.is_a? Numeric
+        [field, (range..range)]
+      else [field, range]
+      end
+    end.compact.sort_by {|k, v| selectivity(k,v)}.flatten
+    Hash[*parsed]
+  end
+
+  # Расчитывает селективность определенного условия
+  def selectivity(field, range)
+  	case field
+  	when :age 	 then (range.end - range.begin) / 100.0
+		when :salary then (range.end - range.begin) / 1000000.0
+		when :height then (range.end - range.begin) / 200.0
+		when :weight then (range.end - range.begin) / 200.0
+		end
+  end
 
 	# Осуществляет поиск объектов, удовлетворяющих условиям
 	# @param criteria - хеш условий для поиска, может содержать от 0 до 4 условий:
@@ -37,65 +54,35 @@ class Searcher
 	# 																														:height (0..200)
 	# 																														:weight (0..200)
 	# @return массив объектов, удовлетворяющих условиям
-	def search(criteria)
+	def search(data, criteria)
 		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
 
-		age_range 	 = criteria[:age] 	 unless criteria[:age].nil?
-		salary_range = criteria[:salary] unless criteria[:salary].nil?
-		height_range = criteria[:height] unless criteria[:height].nil?
-		weight_range = criteria[:weight] unless criteria[:weight].nil?
-
-
-
-		# sel_age 	 = (criteria[:age].end - criteria[:age].begin) / 100
-		# sel_salary = (criteria[:salary].end - criteria[:salary].begin) / 1000000
-		# sel_height = (criteria[:height].end - criteria[:height].begin) / 200
-		# sel_weight = (criteria[:weight].end - criteria[:weight].begin) / 200
-
-
-
-		# selected_age = @age_hash.select {|k, v| age_range === k}.values.flatten
-		# for i in selected_age
-		# 	@salary_hash.select
-		# @new_data = []
-		# for i in selected_age
-		# 	@new_data << @data[i]
-		# end
-
-		# result = []
-		one = @data.select {|i| age_range===i.age}
-		two = one.select {|i| salary_range===i.salary}
-		three = two.select {|i| height_range===i.height}
-		three.select {|i| weight_range===i.weight}
-		# for i in @new_data do
-		# 	if salary_range === i.salary and height_range === i.height and weight_range === i.weight
-		# 		result << i
-		# 	end
-		# end
-
+		@criteria = parse_criteria(criteria)
+		# Проходим по условиям в порядке их селективности
+		# и последовательно уменьшаем нашу выборку
+		@criteria.inject(data) do |data, criterion|
+			data.keep_if{|obj| (criterion[1]===obj.field_value(criterion[0]))}
+		end
 	end
 
-	def test_predicate(obj, criteria)
-
+	def scan_search(data, criteria)
+		result = []
+		for i in data do
+			if criteria[:age]===i.age and criteria[:salary]===i.salary and criteria[:height]===i.height and criteria[:weight]===i.weight
+				result << i
+			end
+		end
 	end
 
-	# def predicate(obj, criteria)
-	# 	sel_salary = (criteria[:salary].end - criteria[:salary].begin) / 1000000
-	# 	sel_height = (criteria[:height].end - criteria[:height].begin) / 200
-	# 	sel_weight = (criteria[:weight].end - criteria[:weight].begin) / 200
+	def search_with_index(data, criteria)
+		@criteria = parse_criteria(criteria)
+		@criteria.inject(data) do |data, criterion|
+			data.keep_if{|obj| (criterion[1]===obj.field_value(criterion[0]))}
+		end
+		c.each{|field, range| result_ids &= @index.select_from(FIELDS[field], range)}
+	end
 
-	# 	if sel_salary < sel_height < sel_weight
-	# 		if criteria[:salary].cover? obj.salary and criteria[:height].cover? obj.height and criteria[:weight].cover? obj.weight
-	# 			return true
-	# 		end
-	# 	elsif sel_height < sel_weight < sel_salary
-	# 		if criteria[:height].cover? obj.height and criteria[:weight].cover? obj.weight and criteria[:salary].cover? obj.salary
-	# 		  return true
-	# 		end
-	# 	else
-	# 		if criteria[:weight].cover? obj.weight and criteria[:height].cover? obj.height and criteria[:salary].cover? obj.salary
-	# 			return true
-	# 		end
-	# 	end
+	# def fetch_from_index(field, range)
+
 
 end
