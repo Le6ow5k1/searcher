@@ -5,9 +5,10 @@ class Searcher
 	FIELDS = {:age => 0, :salary => 1, :height => 2, :weight => 3}
 	BOUNDS = {:age => 0..100, :salary => 0..10000000.0, :height => 0..200, :weight => 0..200}
 
-	# Создает массив индексов по заданным полям
+	# Создает хэш индексов по заданным полям
 	def add_indexes(data, fields)
-		@indexes = fields.map {|field| build_index(data, field)}
+		indexes = fields.map {|field| [field, build_index(data, field)]}.flatten
+		@indexes = Hash[*indexes]
 	end
 
 	# Создает индекс по соответствующему полю
@@ -56,10 +57,10 @@ class Searcher
 	def search(data, criteria)
 		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
 
-		@criteria = parse_criteria(criteria)
+		crit = parse_criteria(criteria)
 		# Проходим по условиям в порядке их селективности
 		# и последовательно уменьшаем нашу выборку
-		@criteria.inject(data) do |data, criterion|
+		crit.inject(data) do |data, criterion|
 			data.keep_if{|obj| (criterion[1]===obj.send(criterion[0]))}
 		end
 	end
@@ -73,15 +74,34 @@ class Searcher
 		end
 	end
 
-	# def search_with_index(data, criteria)
-	# 	@criteria = parse_criteria(criteria)
-	# 	@criteria.inject(data) do |data, criterion|
-	# 		data.keep_if{|obj| (criterion[1]===obj.send(criterion[0]))}
-	# 	end
-	# 	c.each{|field, range| result_ids &= @index.select_from(FIELDS[field], range)}
-	# end
+	def search_with_index(data, criteria)
+		crit = parse_criteria(criteria)
+		# c.each{|field, range| result_ids &= @index.select_from(FIELDS[field], range)}
 
-	# def select(field, )
+		first_field = crit.keys[0]
+		first_result = select(first_field, crit[first_field])
+		crit.delete(first_field)
+		indexes = crit.inject(first_result) do |data_ind, criterion|
+			data_ind &= select(criterion[0], criterion[1])
+		end
+		result = []
+		for i in indexes do
+			result << data[i]
+		end
+		result
+	end
+
+	def select(field, range)
+		return [] unless field
+    return @indexes[field].keys unless range
+    result = []
+    for i in @indexes[field]
+    	if range === i[0]
+    		result += i[1]
+    	end
+    end
+   	result
+	end
 
 	# def fetch_from_index(field, range)
 
