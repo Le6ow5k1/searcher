@@ -2,8 +2,7 @@ require 'debugger'
 
 class Searcher
 	@data = []
-	FIELDS = {:age => 0, :salary => 1, :height => 2, :weight => 3}
-	BOUNDS = {:age => 0..100, :salary => 0..10000000.0, :height => 0..200, :weight => 0..200}
+	bounds = {:age => 0..100, :salary => 0..10000000.0, :height => 0..200, :weight => 0..200}
 
 	# Создает хэш индексов по заданным полям
 	def add_indexes(data, fields)
@@ -26,7 +25,7 @@ class Searcher
 	# Производит разбор и сортировку условий по их селективности
 	def parse_criteria(criteria)
     parsed = criteria.map do |field, range|
-    	if (!FIELDS.has_key? field) or (range == BOUNDS[field])
+    	if range == bounds[field]
     		next
     	end
       if range.is_a? Numeric
@@ -76,13 +75,11 @@ class Searcher
 
 	def search_with_index(data, criteria)
 		crit = parse_criteria(criteria)
-		# c.each{|field, range| result_ids &= @index.select_from(FIELDS[field], range)}
-
 		first_field = crit.keys[0]
-		first_result = select(first_field, crit[first_field])
+		first_result = select_from_index(first_field, crit[first_field])
 		crit.delete(first_field)
 		indexes = crit.inject(first_result) do |data_ind, criterion|
-			data_ind &= select(criterion[0], criterion[1])
+			data_ind &= select_from_index(criterion[0], criterion[1])
 		end
 		result = []
 		for i in indexes do
@@ -91,7 +88,7 @@ class Searcher
 		result
 	end
 
-	def select(field, range)
+	def select_from_index(field, range)
 		return [] unless field
     return @indexes[field].keys unless range
     result = []
@@ -102,8 +99,6 @@ class Searcher
     end
    	result
 	end
-
-	# def fetch_from_index(field, range)
 
 
 end
