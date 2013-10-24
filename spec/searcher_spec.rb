@@ -5,12 +5,12 @@ require_relative '../searcher'
 describe Searcher do
 
 	before :each do
-		@p1 = Person.new(10,  0, 	 		150, 100)
+		@p1 = Person.new(10,  0, 	 		 150, 100)
 		@p2 = Person.new(15,  2000,    180, 150)
 		@p3 = Person.new(50,  100,     150, 200)
 		@p4 = Person.new(30,  100000,  200, 170)
 		@p5 = Person.new(100, 1000000, 100, 0)
-		@p6 = Person.new(0, 	 0,       0,   0)
+		@p6 = Person.new(0, 	 0,      0,   0)
 		@people = [@p1, @p2, @p3, @p4, @p5, @p6]
 	end
 
