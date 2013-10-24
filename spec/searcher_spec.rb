@@ -65,6 +65,15 @@ describe Searcher do
 		end
 	end
 
+	describe 'search_with_index' do
+		it 'returns objects that satisfy given criteria' do
+			searcher = Searcher.new
+			criteria = Hash[:age => (0..50), :salary => (100.0..1000000.0), :height => (0..200), :weight => (90..190)]
+			searcher.add_indexes(@people, [:age, :salary, :height, :weight])
+	  	searcher.search_with_index(@people, criteria).should be == [@p2, @p4]
+	  end
+	end
+
 	describe 'build_index' do
 		it 'return index hash for given field' do
 			searcher = Searcher.new
