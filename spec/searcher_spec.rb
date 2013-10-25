@@ -18,15 +18,17 @@ describe Searcher do
   	context 'when all 4 criteria given' do
 		  it 'should find all documents that satisfy given criteria' do
 		  	searcher = Searcher.new
+		  	searcher.load(@people)
 		  	criteria = Hash[:age => (0..50), :salary => (100..1000000.0), :height => (170..200), :weight => 150]
-		  	searcher.search(@people, criteria).should be == [@p2]
+		  	searcher.search(criteria).should be == [@p2]
 		  end
 		end
 		context 'when only a few criteria given' do
 		  it 'should find all documents that satisfy given criteria' do
 		  	searcher = Searcher.new
+		  	searcher.load(@people)
 		  	criteria = Hash[:height => (110..200), :weight => (140..200)]
-		  	searcher.search(@people, criteria).should be == [@p2, @p3, @p4]
+		  	searcher.search(criteria).should be == [@p2, @p3, @p4]
 		  end
 		end
 	end
@@ -65,20 +67,29 @@ describe Searcher do
 		end
 	end
 
+	describe 'scan_search' do
+		it 'returns objects that satisfy given criteria' do
+			searcher = Searcher.new
+			searcher.load(@people)
+			criteria = Hash[:age => (0..150), :salary => (0..1000000.0), :height => (0..100), :weight => (0..90)]
+	  	searcher.scan_search(criteria).should be == [@p5, @p6]
+	  end
+	end
+
 	describe 'search_with_index' do
 		it 'returns objects that satisfy given criteria' do
 			searcher = Searcher.new
+			searcher.load(@people)
 			criteria = Hash[:age => (0..50), :salary => (100.0..1000000.0), :height => (0..200), :weight => (90..190)]
-			searcher.add_indexes(@people, [:age, :salary, :height, :weight])
-	  	searcher.search_with_index(@people, criteria).should be == [@p2, @p4]
+	  	searcher.search_with_index(criteria).should be == [@p2, @p4]
 	  end
 	end
 
 	describe 'build_index' do
 		it 'return index hash for given field' do
 			searcher = Searcher.new
-			searcher.add_indexes(@people, [:age, :salary])
-			searcher.build_index(@people, :height).should be == {0 => [5], 100 => [4], 200 => [3], 150 => [0,2], 180 => [1]}
+			searcher.load(@people)
+			searcher.build_index(:height).should be == {0 => [5], 100 => [4], 200 => [3], 150 => [0,2], 180 => [1]}
 		end
 	end
 
