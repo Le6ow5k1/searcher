@@ -93,4 +93,12 @@ describe Searcher do
 		end
 	end
 
+	describe 'retrieve_from_index' do
+		it 'returns all obj with field values that are in given range' do
+			searcher = Searcher.new
+			searcher.load(@people)
+			searcher.retrieve_from_index(:age, 5..15).should be == [@p1, @p2]
+		end
+	end
+
 end
