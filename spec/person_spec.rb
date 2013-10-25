@@ -21,13 +21,12 @@ describe Person do
 	  	@person.height.should be 200
 	  	@person.weight.should be 200
 	  end
-
-	  context 'when arguments are out of valid ranges' do
-	  	it 'should raise an error' do
-	  		pending
-	  	end
-	  end
-	  
 	end
+
+	context 'when arguments are out of valid ranges' do
+  	it 'should raise an error' do
+  		expect {Person.new(-10, 666, 200, 700)}.to raise_error
+  	end
+	 end
 
 end
