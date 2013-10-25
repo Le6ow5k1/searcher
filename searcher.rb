@@ -2,18 +2,23 @@ require 'debugger'
 
 class Searcher
 	@data = []
-	bounds = {:age => 0..100, :salary => 0..10000000.0, :height => 0..200, :weight => 0..200}
+	BOUNDS = {:age => 0..100, :salary => 0..1000000.0, :height => 0..200, :weight => 0..200}
+
+	def load(data)
+		@data = data
+		# add_indexes([:age, :height, :weight, :salary])
+	end
 
 	# Создает хэш индексов по заданным полям
-	def add_indexes(data, fields)
-		indexes = fields.map {|field| [field, build_index(data, field)]}.flatten
+	def add_indexes(fields)
+		indexes = fields.map {|field| [field, build_index(field)]}.flatten
 		@indexes = Hash[*indexes]
 	end
 
 	# Создает индекс по соответствующему полю
-	def build_index(data, field)
+	def build_index(field)
 		index = Hash.new
-		data.each_with_index do |obj, i|
+		@data.each_with_index do |obj, i|
 			if !index.has_key?(obj.send(field))
 				index[obj.send(field)] = []
 			end
@@ -25,7 +30,7 @@ class Searcher
 	# Производит разбор и сортировку условий по их селективности
 	def parse_criteria(criteria)
     parsed = criteria.map do |field, range|
-    	if range == bounds[field]
+    	if range == BOUNDS[field]
     		next
     	end
       if range.is_a? Numeric
@@ -53,37 +58,40 @@ class Searcher
 	# 																														:height (0..200)
 	# 																														:weight (0..200)
 	# @return массив объектов, удовлетворяющих условиям
-	def search(data, criteria)
+	def search(criteria)
 		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
 
 		crit = parse_criteria(criteria)
 		# Проходим по условиям в порядке их селективности
 		# и последовательно уменьшаем нашу выборку
-		crit.inject(data) do |data, criterion|
+		crit.inject(@data.dup) do |data, criterion|
 			data.keep_if{|obj| (criterion[1]===obj.send(criterion[0]))}
 		end
 	end
 
-	def scan_search(data, criteria)
+	# Поиск с простым проходом по всем объектам
+	def scan_search(criteria)
+		crit = parse_criteria(criteria)
 		result = []
-		for i in data do
-			if criteria[:age]===i.age and criteria[:salary]===i.salary and criteria[:height]===i.height and criteria[:weight]===i.weight
+		for i in @data do
+			if crit.all? {|field, range| range === i.send(field)}
 				result << i
 			end
 		end
+		result
 	end
 
-	def search_with_index(data, criteria)
+	def search_with_index(criteria)
 		crit = parse_criteria(criteria)
 		first_field = crit.keys[0]
 		first_result = select_from_index(first_field, crit[first_field])
 		crit.delete(first_field)
-		indexes = crit.inject(first_result) do |data_ind, criterion|
-			data_ind &= select_from_index(criterion[0], criterion[1])
+		crit.each_pair do |f, r|
+			first_result &= select_from_index(f, r)
 		end
 		result = []
-		for i in indexes do
-			result << data[i]
+		for i in first_result do
+			result << @data[i]
 		end
 		result
 	end
