@@ -1,4 +1,5 @@
 require 'debugger'
+require './kdtree'
 
 class Searcher
 	@data = []
@@ -6,7 +7,8 @@ class Searcher
 
 	def load(data)
 		@data = data
-		add_indexes([:age, :height, :weight])
+		# add_indexes([:age, :height, :weight])
+		@kdtree = KDTree.new(@data.dup, 4) unless @kdtree
 	end
 
 	# Создает хэш индексов по заданным полям
@@ -30,12 +32,11 @@ class Searcher
 	# Производит разбор и сортировку условий по их селективности
 	def parse_criteria(criteria)
     parsed = criteria.map do |field, range|
-    	if range == BOUNDS[field]
-    		next
-    	end
+    	next if range == BOUNDS[field]
       if range.is_a? Numeric
         [field, (range..range)]
-      else [field, range]
+      else
+      	[field, range]
       end
     end.compact.sort_by {|k, v| selectivity(k,v)}.flatten
     Hash[*parsed]
@@ -68,6 +69,7 @@ class Searcher
 		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
 
 		crit = parse_criteria(criteria)
+
 		# Проходим по условиям в порядке их селективности
 		# и последовательно уменьшаем нашу выборку
 		crit.inject(@data) do |data, criterion|
@@ -81,13 +83,19 @@ class Searcher
 		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
 
 		crit = parse_criteria(criteria)
-		result = []
-		for i in @data do
-			if crit.all? {|field, range| range === i.send(field)}
-				result << i
-			end
+
+		@data.select do |obj|
+			crit.all? {|field, range| range.cover? obj.send(field)}
 		end
-		result
+	end
+
+	def kdtree_search(criteria)
+		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
+
+		crit = criteria.values.map {|r| if r.is_a? Numeric; (r..r); else; r; end}
+
+		@kdtree.find(*crit)
+
 	end
 
 	def search_with_index(criteria)
