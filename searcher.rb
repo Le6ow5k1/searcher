@@ -1,5 +1,4 @@
 require './kdtree'
-require 'debugger'
 
 class Searcher
 	@data = []
@@ -35,14 +34,21 @@ class Searcher
 		end
 	end
 
+	# Алгоритм с использованием в качестве структуры данных К-мерного дерева
+	def kdtree_search(criteria)
+		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
+
+		crit = parse_criteria(criteria)
+
+		@kdtree.find(crit)
+	end
+
 	# Производит разбор и сортировку условий по их селективности
 	def parse_criteria(criteria)
     parsed = criteria.map do |field, range|
-    	next if range == BOUNDS[field] # Пропускаем, т.к. поиск по данному условию избыточен
-      if range.is_a? Numeric # Если число, то преобразуем в интервал
-        [field, (range..range)]
-      else
-      	[field, range]
+    	next if range == BOUNDS[field]
+      if range.is_a? Numeric then [field, (range..range)]
+      else [field, range]
       end
     end.compact.sort_by {|k, v| selectivity(k,v)}.flatten
 
@@ -56,14 +62,5 @@ class Searcher
 
   	diff / BOUNDS[field].end.to_f
   end
-
-	# Алгоритм с использованием в качестве структуры данных К-мерного дерева
-	def kdtree_search(criteria)
-		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
-
-		crit = parse_criteria(criteria)
-
-		@kdtree.find(crit)
-	end
 
 end
