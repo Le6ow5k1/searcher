@@ -1,4 +1,5 @@
 require './kdtree'
+require 'debugger'
 
 class Searcher
 	@data = []
