@@ -7,42 +7,42 @@ class KDTree
 	attr_reader :root
 	attr_reader :points
 
-	def initialize(points, dim)
-		@dim = dim
-		@root = KDNode.new(dim).parse(points)
+	def initialize(points, fields)
+		@fields = fields
+		@root = KDNode.new(fields).parse(points)
 	end
 
 	# def add_node(point)
 	# 	@root.add(point)
 	# end
 
-	def find(*range)
+	def find(criteria)
 		@points = []
-		query(range, @root)
+		query(criteria, @root)
 		@points
 	end
 
-	def query(range, node)
+	def query(criteria, node)
+		return unless node
 		axis = node.axis
-		axis_id = FIELDS.key(axis)
+		# axis_id = FIELDS.key(axis)
 		median = node.location.send(axis)
 
-		if node.left && (median >= range[axis_id].begin)
-			query(range, node.left);
+		if criteria[axis].nil? or (node.left && (median >= criteria[axis].begin))
+			query(criteria, node.left);
 		end
-		if node.right && (median <= range[axis_id].end)
-			query(range, node.right);
+		if criteria[axis].nil? or (node.right && (median <= criteria[axis].end))
+			query(criteria, node.right);
 		end
-		if (0..@dim-1).all? do |ax|
-				range[ax].cover? node.location.send(FIELDS[ax])
-			end
+
+		if criteria.all? {|f, r| r.cover? node.location.send(f)}
 			@points << node.location;
 		end
 	end
 
-	def print
-		@root.print
-	end
+	# def print
+	# 	@root.print
+	# end
 end
 
 class KDNode
@@ -50,23 +50,23 @@ class KDNode
 	attr_reader :location
 	attr_reader :axis
 
-	def initialize(dim, location=nil, left=nil, right=nil)
-		@dim = dim
+	def initialize(fields, location=nil, left=nil, right=nil)
+		@fields = fields
 		@location = location
 		@left = left
 		@right = right
 	end
 
 	def parse(points, depth = 0)
-		axis = depth % @dim
+		axis = depth % @fields
 		@axis = FIELDS[axis]
 
 		points = points.sort_by{|point| point.send(@axis)}
 		half = points.length / 2
 
 		@location = points[half]
-		@left = KDNode.new(@dim).parse(points[0..half-1], depth+1) unless half < 1
-		@right = KDNode.new(@dim).parse(points[half+1..-1], depth+1) unless half+1 >= points.length
+		@left = KDNode.new(@fields).parse(points[0..half-1], depth+1) unless half < 1
+		@right = KDNode.new(@fields).parse(points[half+1..-1], depth+1) unless half+1 >= points.length
 		self
 	end
 
@@ -82,15 +82,15 @@ class KDNode
 	# 	self.parse(@left.to_a + @right.to_a, @axis)
 	# end
 
-	def to_a
-		@left.to_a + [@location] + @right.to_a
-	end
+	# def to_a
+	# 	@left.to_a + [@location] + @right.to_a
+	# end
 
-	def print(l=0)
-		@left.print(l+1) if @left
-		puts(" "*l + @location.inspect)
-		@right.print(l+1) if @right
-	end
+	# def print(l=0)
+	# 	@left.print(l+1) if @left
+	# 	puts(" "*l + @location.inspect)
+	# 	@right.print(l+1) if @right
+	# end
 end
 
 # a = []
