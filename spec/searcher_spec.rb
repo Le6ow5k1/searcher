@@ -89,8 +89,8 @@ describe Searcher do
 		  it 'should find all documents that satisfy given criteria' do
 		  	searcher = Searcher.new
 		  	searcher.load(@people)
-		  	criteria = Hash[:height => (110..200), :weight => (140..200)]
-		  	searcher.kdtree_search(criteria).should be == [@p2, @p3, @p4]
+		  	criteria = Hash[:age => (20..60), :height => (110..200), :weight => (140..200)]
+		  	searcher.kdtree_search(criteria).should be == [@p3, @p4]
 		  end
 		end
 	end
