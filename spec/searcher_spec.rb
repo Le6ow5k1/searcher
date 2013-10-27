@@ -77,12 +77,22 @@ describe Searcher do
 	end
 
 	describe 'kdtree_search' do
-		it 'returns objects that satisfy given criteria' do
-			searcher = Searcher.new
-			searcher.load(@people)
-			criteria = Hash[:age => (0..150), :salary => (2000..1000000.0), :height => (100..190), :weight => (0..200)]
-	  	searcher.scan_search(criteria).should be == [@p2, @p5]
-	  end
+		context 'when all 4 criteria given' do
+		  it 'should find all documents that satisfy given criteria' do
+		  	searcher = Searcher.new
+		  	searcher.load(@people)
+		  	criteria = Hash[:age => (0..50), :salary => (100..1000000.0), :height => (170..200), :weight => 150]
+		  	searcher.kdtree_search(criteria).should be == [@p2]
+		  end
+		end
+		context 'when only a few criteria given' do
+		  it 'should find all documents that satisfy given criteria' do
+		  	searcher = Searcher.new
+		  	searcher.load(@people)
+		  	criteria = Hash[:height => (110..200), :weight => (140..200)]
+		  	searcher.kdtree_search(criteria).should be == [@p2, @p3, @p4]
+		  end
+		end
 	end
 
 	# describe 'search_with_index' do
