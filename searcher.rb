@@ -72,7 +72,7 @@ class Searcher
 
 		# Проходим по условиям в порядке их селективности
 		# и последовательно уменьшаем нашу выборку
-		crit.inject(@data) do |data, criterion|
+		crit.inject(@data.dup) do |data, criterion|
 			break if data.empty?
 			data.keep_if{|obj| (criterion[1] === obj.send(criterion[0]))}
 		end
@@ -92,10 +92,15 @@ class Searcher
 	def kdtree_search(criteria)
 		raise Exception.new('Expecting a Hash') unless criteria.is_a? Hash
 
-		crit = criteria.values.map {|r| if r.is_a? Numeric; (r..r); else; r; end}
+		# crit = criteria.map do |field, range|
+		# 	if range.is_a? Numeric; (range..range)
+		# 	elsif range == BOUNDS[field]; nil
+		# 	else range
+		# 	end
+		# end
+		crit = parse_criteria(criteria)
 
-		@kdtree.find(*crit)
-
+		@kdtree.find(crit)
 	end
 
 	def search_with_index(criteria)
@@ -139,5 +144,26 @@ class Searcher
     end
    	result
 	end
+
+	# def qsort_by!(data, field, l = 0, r = data.size - 1)
+ #    i, j = l, r
+ #    base_point = data[((l + r) / 2).to_i].send(field)
+ #    loop do
+ #      i += 1 while data[i].send(field) < base_point
+ #      j -= 1 while data[j].send(field) > base_point
+
+ #      if i <= j
+ #        data[i], data[j] = data[j], data[i]
+ #        i += 1
+ #        j -= 1
+ #      else
+ #        break
+ #      end
+ #    end
+
+ #    qsort_by!(data, field, l, j) if j > l
+ #    qsort_by!(data, field, i, r) if i < r
+ #    data
+ #  end
 
 end
