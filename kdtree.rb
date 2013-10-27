@@ -20,14 +20,14 @@ class KDTree
 		median = node.location.send(field)
 
 		if criteria[field].nil? or (node.left and (median >= criteria[field].begin))
-			query(criteria, node.left);
+			query(criteria, node.left)
 		end
 		if criteria[field].nil? or (node.right and (median <= criteria[field].end))
-			query(criteria, node.right);
+			query(criteria, node.right)
 		end
 
 		if criteria.all? {|f, r| r.cover? node.location.send(f)}
-			@objects << node.location;
+			@objects << node.location
 		end
 	end
 
