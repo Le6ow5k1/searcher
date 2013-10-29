@@ -58,8 +58,8 @@ class Searcher
   # Расчитывает селективность определенного условия
   def selectivity(field, range)
   	diff = (range.end-range.begin)
-		diff = 0.01 if (range.end-range.begin) == 0
-
+		diff = 0.01 if (range.end-range.begin) == 0 # чтобы при делении на ширину
+																								# диапазона не получать ноль
   	diff / BOUNDS[field].end.to_f
   end
 
