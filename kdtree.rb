@@ -14,15 +14,20 @@ class KDTree
 		@objects
 	end
 
+	private
+
 	def query(criteria, node)
-		return unless node
 		field = node.field
 		median = node.location.send(field)
+		range = criteria[field]
 
-		if criteria[field].nil? or (node.left and (median >= criteria[field].begin))
+		# Если медиана меньше заданного диапазона - идем по правому поддереву,
+		# если больше - по левому. Иначе если медиана лежит в диапазоне или
+		# по данному диапазону вообще не требуется проверка - заходим в оба поддерева
+		if (range.nil? and node.left) or (node.left and (median >= range.begin))
 			query(criteria, node.left)
 		end
-		if criteria[field].nil? or (node.right and (median <= criteria[field].end))
+		if (range.nil? and node.right) or (node.right and (median <= range.end))
 			query(criteria, node.right)
 		end
 
@@ -30,7 +35,6 @@ class KDTree
 			@objects << node.location
 		end
 	end
-
 end
 
 class KDNode
@@ -50,7 +54,7 @@ class KDNode
 		field = depth % @fields
 		@field = FIELDS[field]
 
-		objects = objects.sort_by{|point| point.send(@field)}
+		objects = objects.sort_by{|obj| obj.send(@field)}
 		half = objects.length / 2
 
 		@location = objects[half]
@@ -58,5 +62,4 @@ class KDNode
 		@right = KDNode.new(@fields).parse(objects[half+1..-1], depth+1) unless half+1 >= objects.length
 		self
 	end
-
 end
